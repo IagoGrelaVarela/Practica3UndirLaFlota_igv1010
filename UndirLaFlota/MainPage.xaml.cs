@@ -14,6 +14,8 @@ namespace UndirLaFlota
         private Button[,] botonesJugador  = new Button[10, 10];
         private Random random = new Random();
         private bool partidaTerminada = false;
+        // Celdas pendientes de explorar tras un impacto (modo objetivo de la IA)
+        private List<(int, int)> objetivosIA = new List<(int, int)>();
 
         /// <summary>
         /// Inicializa la página, crea ambos tableros y genera los botones.
@@ -131,9 +133,57 @@ namespace UndirLaFlota
         }
 
         /// <summary>
-        /// Ejecuta el turno del ordenador. Dispara en una celda aleatoria disponible
-        /// y sigue disparando mientras acierte, igual que el jugador.
-        /// Acumula todas las jugadas y las muestra en un único mensaje al ceder el turno.
+        /// Selecciona la celda que atacará el ordenador en este disparo.
+        /// Si hay objetivos pendientes de un impacto anterior, los usa (modo objetivo);
+        /// en caso contrario, elige una celda al azar (modo caza).
+        /// </summary>
+        /// <returns>Coordenadas (fila, columna) de la celda elegida.</returns>
+        private (int, int) ElegirCeldaIA()
+        {
+            // Descartar objetivos que ya hayan sido atacados en turnos anteriores
+            objetivosIA.RemoveAll(c =>
+                tabJugador.TableroList[c.Item1][c.Item2] == 1 ||
+                tabJugador.TableroList[c.Item1][c.Item2] == 3);
+
+            if (objetivosIA.Count > 0)
+            {
+                // Modo objetivo: explorar adyacentes al último impacto
+                int idx = random.Next(objetivosIA.Count);
+                var celda = objetivosIA[idx];
+                objetivosIA.RemoveAt(idx);
+                return celda;
+            }
+
+            // Modo caza: disparo aleatorio entre las celdas sin atacar
+            var disponibles = tabJugador.CeldasDisponibles();
+            return disponibles[random.Next(disponibles.Count)];
+        }
+
+        /// <summary>
+        /// Añade a la cola de objetivos las celdas adyacentes válidas al impacto indicado,
+        /// evitando duplicados y celdas ya atacadas.
+        /// </summary>
+        /// <param name="x">Fila de la celda impactada.</param>
+        /// <param name="y">Columna de la celda impactada.</param>
+        private void AgregarObjetivosAdyacentes(int x, int y)
+        {
+            (int dx, int dy)[] direcciones = { (-1, 0), (1, 0), (0, -1), (0, 1) };
+            foreach (var (dx, dy) in direcciones)
+            {
+                int nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= tabJugador.Dim || ny < 0 || ny >= tabJugador.Dim)
+                    continue;
+
+                int estado = tabJugador.TableroList[nx][ny];
+                if (estado != 1 && estado != 3 && !objetivosIA.Contains((nx, ny)))
+                    objetivosIA.Add((nx, ny));
+            }
+        }
+
+        /// <summary>
+        /// Ejecuta el turno del ordenador usando una IA de dos modos: caza y objetivo.
+        /// Sigue disparando mientras acierte. Acumula todas las jugadas y las muestra
+        /// en un único mensaje al ceder el turno.
         /// </summary>
         private void TurnoComputadora()
         {
@@ -142,10 +192,7 @@ namespace UndirLaFlota
 
             while (sigueJugando && !partidaTerminada)
             {
-                var disponibles = tabJugador.CeldasDisponibles();
-                if (disponibles.Count == 0) return;
-
-                var (x, y) = disponibles[random.Next(disponibles.Count)];
+                var (x, y) = ElegirCeldaIA();
                 string coord = FormatearCoordenada(x, y);
                 string str = tabJugador.Jugada(x, y);
 
@@ -161,18 +208,22 @@ namespace UndirLaFlota
                 {
                     botonesJugador[x, y].Text = "3";
                     log.AppendLine($"{coord} - Tocado.");
+                    AgregarObjetivosAdyacentes(x, y);
                 }
                 else if (str.Equals("Hundido"))
                 {
                     foreach (var (r, c) in tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID))
                         botonesJugador[r, c].Text = "4";
                     log.AppendLine($"{coord} - ¡Hundido!");
+                    // Barco hundido: limpiar objetivos y volver al modo caza
+                    objetivosIA.Clear();
                 }
                 else if (str.Equals("Partida finalizada"))
                 {
                     foreach (var (r, c) in tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID))
                         botonesJugador[r, c].Text = "4";
                     log.AppendLine($"{coord} - ¡Hundido!");
+                    objetivosIA.Clear();
                     partidaTerminada = true;
                     sigueJugando = false;
                 }
