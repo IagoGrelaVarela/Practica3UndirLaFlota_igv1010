@@ -65,13 +65,13 @@ namespace UndirLaFlota
                 DisplayAlert("Barco", "Barco Hundido!!", "OK");
             }
 
-
+            
             else if (str.Equals("Partida finalizada"))
             {
                 DisplayAlert("Partidad", "Partida Finalizada!!", "OK");
             }
         }
 
-        
+
     }
 }

@@ -152,9 +152,9 @@ public class Tablero
             if (BarcoHundido(barcoID))
             {
                 if (aciertos >= TotalPuntos)
-                {
-                    return "Partida finalizada";
-                }
+            {
+                return "Partida finalizada";
+            }
                 else
                 {
                     return "Hundido";
@@ -167,7 +167,7 @@ public class Tablero
 
         return null;
     }
-    
+
     private bool BarcoHundido(int id)
     {
         for (int i = 0; i < Dim; i++)
