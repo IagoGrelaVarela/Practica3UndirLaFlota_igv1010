@@ -5,11 +5,27 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:UndirLaFlota"
     Shell.FlyoutBehavior="Disabled"
-    Title="UndirLaFlota">
+    Title="Hundir la Flota">
 
+    <!--El Login sin FlyoutItem para no aparecer en el menú desplegable-->
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Login"
+        Shell.FlyoutItemIsVisible="False"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="LoginPage" />
+
+    <FlyoutItem Title="Juego">
+        <ShellContent
+            Title="Juego"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Acerca de">
+        <ShellContent
+            Title="Acerca de"
+            ContentTemplate="{DataTemplate local:AcercaDePage}"
+            Route="AcercaDePage" />
+    </FlyoutItem>
 
 </Shell>

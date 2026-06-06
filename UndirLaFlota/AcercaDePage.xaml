@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UndirLaFlota.AcercaDePage">
+
+    <VerticalStackLayout Spacing="16" Padding="30">
+
+        <Label
+            Text="Acerca del juego"
+            Style="{StaticResource Headline}" />
+
+        <Label Text="Tablero de 10×10 con 5 barcos de distintos tamaños:" />
+
+        <Label Text="  · Portaaviones — 6 celdas" />
+        <Label Text="  · Acorazado — 5 celdas" />
+        <Label Text="  · Crucero — 3 celdas" />
+        <Label Text="  · Submarino — 3 celdas" />
+        <Label Text="  · Destructor — 2 celdas" />
+
+        <Label Text="Si aciertas un disparo, sigues jugando. Si fallas, el turno pasa al ordenador." />
+
+        <Label Text="El ordenador explora las celdas adyacentes cuando impacta en un barco." />
+
+    </VerticalStackLayout>
+
+</ContentPage>

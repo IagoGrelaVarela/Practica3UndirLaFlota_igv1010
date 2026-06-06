@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UndirLaFlota.LoginPage">
+
+    <VerticalStackLayout Spacing="12" Padding="16">
+
+        <Label
+            Text="Hundir la Flota"
+            Style="{StaticResource Headline}"
+            VerticalOptions="Center"
+            HorizontalOptions="Center" />
+
+        <Label
+            Text="Usuario: jugador  |  Contraseña: 1234"
+            HorizontalOptions="Center"
+            FontSize="12" />
+
+        <Entry
+            x:Name="UsernameEntry"
+            Placeholder="Usuario"
+            HorizontalOptions="Fill" />
+
+        <Entry
+            x:Name="PasswordEntry"
+            Placeholder="Contraseña"
+            IsPassword="True"
+            HorizontalOptions="Fill" />
+
+        <Button
+            Text="Iniciar sesión"
+            Clicked="OnLoginClicked"
+            HorizontalOptions="Fill" />
+        
+        <Button
+            x:Name="FingerBtn"
+            Text="Acceder con huella" 
+            Clicked="ClickedHuella"
+            HorizontalOptions="Fill" />
+
+    </VerticalStackLayout>
+
+</ContentPage>

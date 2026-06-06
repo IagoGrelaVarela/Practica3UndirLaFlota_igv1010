@@ -64,6 +64,7 @@ namespace UndirLaFlota
                     button.Clicked += (sender, e) =>
                     {
                         var btn = sender as Button;
+                        if (btn == null) return;
                         var position = (Tuple<int, int>)btn.CommandParameter;
                         Seleccion(btn, position.Item1, position.Item2);
                     };

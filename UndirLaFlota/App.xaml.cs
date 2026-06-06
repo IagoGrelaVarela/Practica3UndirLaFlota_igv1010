@@ -1,4 +1,4 @@
-﻿namespace UndirLaFlota
+namespace UndirLaFlota
 {
     public partial class App : Application
     {
@@ -7,6 +7,8 @@
             InitializeComponent();
 
             MainPage = new AppShell();
+
+            Shell.Current.GoToAsync("//LoginPage"); // Iniciamos en la página de Login
         }
     }
 }
