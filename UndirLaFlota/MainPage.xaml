@@ -8,6 +8,16 @@
             Padding="30,0"
             Spacing="25">
 
+            <!-- Marcador de victorias -->
+            <Label x:Name="LabelMarcador"
+                   Text="Jugador: 0  |  Enemigo: 0"
+                   Style="{StaticResource SubHeadline}" />
+
+            <!-- Barcos hundidos en la partida actual -->
+            <Label x:Name="LabelBarcos"
+                   Text="Tú: -   Ordenador: -"
+                   HorizontalOptions="Center" />
+
             <Label Text="Tablero Enemigo"
                    Style="{StaticResource SubHeadline}" />
 
@@ -117,8 +127,19 @@
                 <Label Grid.Column="9"  Grid.Row="0" Text="9"/>
                 <Label Grid.Column="10" Grid.Row="0" Text="10"/>
             </Grid>
+
+            <Button Text="Nueva Partida"
+                    Clicked="NuevaPartida_Clicked" />
+
+            <!-- Historial de partidas -->
+            <Label Text="Historial"
+                   Style="{StaticResource SubHeadline}" />
+
+            <Label x:Name="LabelHistorial"
+                   Text="Sin partidas anteriores."
+                   HorizontalOptions="Start" />
+
         </VerticalStackLayout>
     </ScrollView>
-
 
 </ContentPage>

@@ -3,8 +3,8 @@ using UndirLaFlota.Juego;
 namespace UndirLaFlota
 {
     /// <summary>
-    /// Página principal del juego. Gestiona los dos tableros (jugador y enemigo)
-    /// y la alternancia de turnos entre el jugador y el ordenador.
+    /// Página principal del juego. Gestiona los dos tableros (jugador y enemigo),
+    /// la alternancia de turnos, el marcador y el historial de partidas.
     /// </summary>
     public partial class MainPage : ContentPage
     {
@@ -16,6 +16,22 @@ namespace UndirLaFlota
         private bool partidaTerminada = false;
         // Celdas pendientes de explorar tras un impacto (modo objetivo de la IA)
         private List<(int, int)> objetivosIA = new List<(int, int)>();
+
+        // Contadores de victorias acumulados entre partidas
+        private int victoriasJugador   = 0;
+        private int victoriasOrdenador = 0;
+        private int numeroPartida      = 0;
+
+        // Disparos de la partida en curso (se resetean en cada nueva partida)
+        private int disparosJugador   = 0;
+        private int disparosOrdenador = 0;
+
+        // Registro de resultados de partidas anteriores
+        private List<string> historial = new List<string>();
+
+        // Tamaños de los barcos hundidos en la partida en curso
+        private List<int> barcosHundidosEnemigo = new List<int>(); // hundidos por el jugador
+        private List<int> barcosHundidosJugador  = new List<int>(); // hundidos por el ordenador
 
         /// <summary>
         /// Inicializa la página, crea ambos tableros y genera los botones.
@@ -93,6 +109,81 @@ namespace UndirLaFlota
             => $"{(char)('A' + fila)}{col + 1}";
 
         /// <summary>
+        /// Devuelve una cadena con los tamaños de los barcos hundidos, por ejemplo "[6][3]".
+        /// </summary>
+        /// <param name="barcos">Lista de tamaños de barcos hundidos.</param>
+        /// <returns>Cadena formateada, o "—" si no se ha hundido ninguno.</returns>
+        private string FormatearBarcos(List<int> barcos)
+        {
+            if (barcos.Count == 0) return "—";
+            var sb = new System.Text.StringBuilder();
+            foreach (int tam in barcos)
+                sb.Append($"[{tam}]");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Actualiza el label de barcos hundidos con el estado de la partida en curso.
+        /// </summary>
+        private void ActualizarContadorBarcos()
+        {
+            LabelBarcos.Text = $"Jugador: {FormatearBarcos(barcosHundidosEnemigo)}   " +
+                               $"Enemigo: {FormatearBarcos(barcosHundidosJugador)}";
+        }
+
+        /// <summary>
+        /// Registra el resultado de la partida terminada: actualiza contadores,
+        /// añade una entrada al historial y refresca los elementos de la UI.
+        /// </summary>
+        /// <param name="ganador">Cadena que identifica al ganador: "Jugador" u "Ordenador".</param>
+        private void RegistrarPartida(string ganador)
+        {
+            numeroPartida++;
+            if (ganador == "Jugador")
+                victoriasJugador++;
+            else
+                victoriasOrdenador++;
+
+            string fecha   = DateTime.Now.ToString("dd/MM/yyyy");
+            string entrada = $"Partida {numeroPartida} · {fecha} · {ganador} " +
+                             $"({disparosJugador}j / {disparosOrdenador}o disparos)";
+            historial.Add(entrada);
+
+            LabelMarcador.Text = $"Tú: {victoriasJugador}  |  Ordenador: {victoriasOrdenador}";
+
+            // Mostrar el historial con la partida más reciente primero
+            var sb = new System.Text.StringBuilder();
+            for (int i = historial.Count - 1; i >= 0; i--)
+                sb.AppendLine(historial[i]);
+            LabelHistorial.Text = sb.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// Reinicia la partida en curso sin alterar el marcador ni el historial.
+        /// Reutiliza los botones existentes actualizando solo su texto.
+        /// </summary>
+        private void NuevaPartida_Clicked(object sender, EventArgs e)
+        {
+            tabEnemigo = new Tablero();
+            tabJugador = new Tablero();
+            partidaTerminada  = false;
+            disparosJugador   = 0;
+            disparosOrdenador = 0;
+            objetivosIA.Clear();
+            barcosHundidosEnemigo.Clear();
+            barcosHundidosJugador.Clear();
+            ActualizarContadorBarcos();
+
+            for (int i = 0; i < 10; i++)
+                for (int j = 0; j < 10; j++)
+                    botonesEnemigo[i, j].Text = "0";
+
+            for (int i = 0; i < 10; i++)
+                for (int j = 0; j < 10; j++)
+                    botonesJugador[i, j].Text = tabJugador.TableroList[i][j] >= 10 ? "B" : "0";
+        }
+
+        /// <summary>
         /// Gestiona el disparo del jugador sobre el tablero enemigo.
         /// Si acierta, el jugador vuelve a disparar; si falla, cede el turno al ordenador.
         /// </summary>
@@ -106,6 +197,8 @@ namespace UndirLaFlota
             string str = tabEnemigo.Jugada(row, column);
             if (str == null) return;
 
+            disparosJugador++;
+
             if (str.Equals("Agua"))
             {
                 btn.Text = "1";
@@ -118,16 +211,23 @@ namespace UndirLaFlota
             }
             else if (str.Equals("Hundido"))
             {
-                foreach (var (r, c) in tabEnemigo.GetCoordsBarco(tabEnemigo.UltimoHundidoID))
+                var coords = tabEnemigo.GetCoordsBarco(tabEnemigo.UltimoHundidoID);
+                foreach (var (r, c) in coords)
                     botonesEnemigo[r, c].Text = "4";
+                barcosHundidosEnemigo.Add(coords.Count);
+                ActualizarContadorBarcos();
                 DisplayAlert("Barco", "¡Barco enemigo hundido!", "OK");
                 // Acierto: el jugador conserva el turno
             }
             else if (str.Equals("Partida finalizada"))
             {
-                foreach (var (r, c) in tabEnemigo.GetCoordsBarco(tabEnemigo.UltimoHundidoID))
+                var coords = tabEnemigo.GetCoordsBarco(tabEnemigo.UltimoHundidoID);
+                foreach (var (r, c) in coords)
                     botonesEnemigo[r, c].Text = "4";
+                barcosHundidosEnemigo.Add(coords.Count);
+                ActualizarContadorBarcos();
                 partidaTerminada = true;
+                RegistrarPartida("Jugador");
                 DisplayAlert("Partida", "¡Has ganado!", "OK");
             }
         }
@@ -198,6 +298,8 @@ namespace UndirLaFlota
 
                 if (str == null) return;
 
+                disparosOrdenador++;
+
                 if (str.Equals("Agua"))
                 {
                     botonesJugador[x, y].Text = "1";
@@ -212,19 +314,26 @@ namespace UndirLaFlota
                 }
                 else if (str.Equals("Hundido"))
                 {
-                    foreach (var (r, c) in tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID))
+                    var coords = tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID);
+                    foreach (var (r, c) in coords)
                         botonesJugador[r, c].Text = "4";
+                    barcosHundidosJugador.Add(coords.Count);
+                    ActualizarContadorBarcos();
                     log.AppendLine($"{coord} - ¡Hundido!");
                     // Barco hundido: limpiar objetivos y volver al modo caza
                     objetivosIA.Clear();
                 }
                 else if (str.Equals("Partida finalizada"))
                 {
-                    foreach (var (r, c) in tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID))
+                    var coords = tabJugador.GetCoordsBarco(tabJugador.UltimoHundidoID);
+                    foreach (var (r, c) in coords)
                         botonesJugador[r, c].Text = "4";
+                    barcosHundidosJugador.Add(coords.Count);
+                    ActualizarContadorBarcos();
                     log.AppendLine($"{coord} - ¡Hundido!");
                     objetivosIA.Clear();
                     partidaTerminada = true;
+                    RegistrarPartida("Ordenador");
                     sigueJugando = false;
                 }
             }
